@@ -13,6 +13,50 @@
             font-family: Arial, sans-serif;
         }
 
+        .close-left-menu-screen {
+            display: flex;
+        }
+
+        .open-left-menu-screen {
+            display: none;
+        }
+
+        .main-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            z-index: 1;
+        }
+        
+        .menu-button {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            z-index: 2;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+        }
+        
+        .catalog-label {
+            position: fixed;
+            top: calc(50% + 30vh);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4;
+            color: white;
+            font-size: 3em;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            margin: 10px;
+            cursor: pointer;
+        }
+
         .image-container {
             display: flex;
             height: 100vh;
@@ -133,7 +177,7 @@
             color: #ff0000;
         }
         
-        .catalog-label {
+        .open-left-menu-screen-catalog-label {
             position: absolute;
             top: calc(50% + 30vh);
             left: calc(30% + 35%);
@@ -146,37 +190,80 @@
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
             width: 70%;
             margin-top: 40px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="image-container">
-        <div class="left-menu">
-            <button class="close-button">×</button>
-            
-            <div class="menu-content">
-                <h1 class="menu-title">Категории</h1>
-                <ul class="menu-categories">
-                    <li>Одежда</li>
-                    <li>Обувь</li>
-                    <li>Для дома</li>
-                    <li>Электроника</li>
-                </ul>
+    <div class="close-left-menu-screen">
+        <img src="main_bg.png" class="main-bg">
+        <img src="left_menu_button.png" class="menu-button" id="leftMenuButton">
+        
+        <div class="discount-container">
+            <img src="main_discount_bg.png" class="discount-bg-image">
+            <div class="discount-text">
+                <div class="discount-description">ЛЕТНИЕ<br>СКИДКИ</div>
+                <div class="discount-percent">35%</div>
             </div>
         </div>
         
-        <div class="open-left-menu-screen-main-bg">
-            <img src="main_bg.png" alt="Main Background">
-            <div class="discount-container">
-                <img src="main_discount_bg.png" class="discount-bg-image" alt="Discount Background">
-                <div class="discount-text">
-                    <div class="discount-description">ЛЕТНИЕ<br>СКИДКИ</div>
-                    <div class="discount-percent">35%</div>
+        <div class="catalog-label" id="catalogButton">КАТАЛОГ</div>
+    </div>
+
+    <div class="open-left-menu-screen">
+        <div class="image-container">
+            <div class="left-menu">
+                <button class="close-button" id="closeButton">×</button>
+                
+                <div class="menu-content">
+                    <h1 class="menu-title">Категории</h1>
+                    <ul class="menu-categories">
+                        <li>Одежда</li>
+                        <li>Обувь</li>
+                        <li>Аксессуары</li>
+                    </ul>
                 </div>
             </div>
+            
+            <div class="open-left-menu-screen-main-bg">
+                <img src="main_bg.png" alt="Main Background">
+                <div class="discount-container">
+                    <img src="main_discount_bg.png" class="discount-bg-image" alt="Discount Background">
+                    <div class="discount-text">
+                        <div class="discount-description">ЛЕТНИЕ<br>СКИДКИ</div>
+                        <div class="discount-percent">35%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="open-left-menu-screen-catalog-label" id="openCatalogButton">КАТАЛОГ</div>
         </div>
-        
-        <div class="catalog-label">КАТАЛОГ</div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const leftMenuButton = document.getElementById('leftMenuButton');
+            const catalogButton = document.getElementById('catalogButton');
+            const closeButton = document.getElementById('closeButton');
+            const openCatalogButton = document.getElementById('openCatalogButton');
+            const closeLeftMenuScreen = document.querySelector('.close-left-menu-screen');
+            const openLeftMenuScreen = document.querySelector('.open-left-menu-screen');
+
+            function openMenu() {
+                closeLeftMenuScreen.style.display = 'none';
+                openLeftMenuScreen.style.display = 'flex';
+            }
+
+            function closeMenu() {
+                openLeftMenuScreen.style.display = 'none';
+                closeLeftMenuScreen.style.display = 'flex';
+            }
+
+            leftMenuButton.addEventListener('click', openMenu);
+            catalogButton.addEventListener('click', openMenu);
+            closeButton.addEventListener('click', closeMenu);
+            openCatalogButton.addEventListener('click', closeMenu);
+        });
+    </script>
 </body>
 </html>
