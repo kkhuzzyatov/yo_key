@@ -119,12 +119,20 @@
             list-style: none;
             padding: 0;
             margin: 0;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
         }
         
         .menu-categories li {
             padding: 10px 0;
             border-bottom: 1px solid #ddd;
             color: #333;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .menu-categories li:hover {
+            background-color: #e9e9e9;
         }
         
         .discount-container {
@@ -196,14 +204,14 @@
 </head>
 <body>
     <div class="close-left-menu-screen">
-        <img src="main_bg.png" class="main-bg">
+        <img src="" class="main-bg" id="mainBg">
         <img src="left_menu_button.png" class="menu-button" id="leftMenuButton">
         
         <div class="discount-container">
             <img src="main_discount_bg.png" class="discount-bg-image">
             <div class="discount-text">
-                <div class="discount-description">ЛЕТНИЕ<br>СКИДКИ</div>
-                <div class="discount-percent">35%</div>
+                <div class="discount-description" id="discountDescription"></div>
+                <div class="discount-percent" id="discountPercent"></div>
             </div>
         </div>
         
@@ -216,22 +224,18 @@
                 <button class="close-button" id="closeButton">×</button>
                 
                 <div class="menu-content">
-                    <h1 class="menu-title">Категории</h1>
-                    <ul class="menu-categories">
-                        <li>Одежда</li>
-                        <li>Обувь</li>
-                        <li>Аксессуары</li>
-                    </ul>
+                    <h1 class="menu-title" id="headerOfLeftMenu"></h1>
+                    <ul class="menu-categories" id="categoriesList"></ul>
                 </div>
             </div>
             
             <div class="open-left-menu-screen-main-bg">
-                <img src="main_bg.png" alt="Main Background">
+                <img src="" class="main-bg" id="openMainBg" alt="Main Background">
                 <div class="discount-container">
                     <img src="main_discount_bg.png" class="discount-bg-image" alt="Discount Background">
                     <div class="discount-text">
-                        <div class="discount-description">ЛЕТНИЕ<br>СКИДКИ</div>
-                        <div class="discount-percent">35%</div>
+                        <div class="discount-description" id="openDiscountDescription"></div>
+                        <div class="discount-percent" id="openDiscountPercent"></div>
                     </div>
                 </div>
             </div>
@@ -242,6 +246,36 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const mainBg = 'https://basket-23.wbbasket.ru/vol3961/part396128/396128474/images/big/1.webp';
+            const discountDescription = 'ЛЕТНИЕ<br>СКИДКИ';
+            const discountPercent = '35%';
+            const headerOfLeftMenu = 'Категории';
+            const categories = [
+                'Одежда', 
+                'Обувь', 
+                'Аксессуары',
+                'Для дома',
+                'Электроника',
+                'Красота и уход',
+                'Спорт и отдых',
+                'Детские товары'
+            ];
+
+            document.getElementById('mainBg').src = mainBg;
+            document.getElementById('openMainBg').src = mainBg;
+            document.getElementById('discountDescription').innerHTML = discountDescription;
+            document.getElementById('discountPercent').textContent = discountPercent;
+            document.getElementById('openDiscountDescription').innerHTML = discountDescription;
+            document.getElementById('openDiscountPercent').textContent = discountPercent;
+            document.getElementById('headerOfLeftMenu').textContent = headerOfLeftMenu;
+
+            const categoriesList = document.getElementById('categoriesList');
+            categories.forEach(category => {
+                const li = document.createElement('li');
+                li.textContent = category;
+                categoriesList.appendChild(li);
+            });
+
             const leftMenuButton = document.getElementById('leftMenuButton');
             const catalogButton = document.getElementById('catalogButton');
             const closeButton = document.getElementById('closeButton');
