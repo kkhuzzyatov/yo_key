@@ -1,0 +1,4 @@
+CREATE TABLE segments (
+    id SERIAL PRIMARY KEY,
+    value VARCHAR(50) NOT NULL UNIQUE
+);

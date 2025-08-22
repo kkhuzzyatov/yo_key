@@ -1,0 +1,5 @@
+CREATE TABLE ui_elements (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    value TEXT NOT NULL UNIQUE
+);
