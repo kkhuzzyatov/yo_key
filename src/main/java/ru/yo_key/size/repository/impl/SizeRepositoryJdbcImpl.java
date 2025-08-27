@@ -1,8 +1,8 @@
-package ru.yo_key.segment.repository.impl;
+package ru.yo_key.size.repository.impl;
 
 import org.springframework.stereotype.Repository;
-import ru.yo_key.segment.entity.Segment;
-import ru.yo_key.segment.repository.SegmentRepository;
+import ru.yo_key.size.entity.Size;
+import ru.yo_key.size.repository.SizeRepository;
 import ru.yo_key.util.SimpleDataSource;
 
 import java.sql.*;
@@ -10,25 +10,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public class SegmentRepositoryJdbcImpl implements SegmentRepository {
+public class SizeRepositoryJdbcImpl implements SizeRepository {
     private final SimpleDataSource simpleDataSource;
 
     //language=SQL
-    private final String SQL_INSERT = "INSERT INTO segments (value) VALUES (?) RETURNING id";
+    private final String SQL_INSERT = "INSERT INTO sizes (value) VALUES (?) RETURNING id";
     //language=SQL
-    private final String SQL_GET_ALL = "SELECT id, value FROM segments";
+    private final String SQL_GET_ALL = "SELECT id, value FROM sizes";
     //language=SQL
-    private final String SQL_DELETE = "DELETE FROM segments WHERE id=?";
+    private final String SQL_DELETE = "DELETE FROM sizes WHERE id=?";
 
-    public SegmentRepositoryJdbcImpl(SimpleDataSource simpleDataSource) {
+    public SizeRepositoryJdbcImpl(SimpleDataSource simpleDataSource) {
         this.simpleDataSource = simpleDataSource;
     }
 
     @Override
-    public Integer save(Segment segment) {
+    public Integer save(Size size) {
         try (Connection connection = simpleDataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(SQL_INSERT)) {
-            statement.setString(1, segment.getValue());
+            statement.setString(1, size.getValue());
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
                 return rs.getInt(1);
@@ -40,18 +40,18 @@ public class SegmentRepositoryJdbcImpl implements SegmentRepository {
     }
 
     @Override
-    public List<Segment> getAll() {
-        List<Segment> segments = new ArrayList<>();
+    public List<Size> getAll() {
+        List<Size> sizes = new ArrayList<>();
         try (Connection connection = simpleDataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery(SQL_GET_ALL)) {
             while (rs.next()) {
-                segments.add(new Segment(rs.getInt("id"), rs.getString("value")));
+                sizes.add(new Size(rs.getInt("id"), rs.getString("value")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return segments;
+        return sizes;
     }
 
     @Override
@@ -65,4 +65,3 @@ public class SegmentRepositoryJdbcImpl implements SegmentRepository {
         }
     }
 }
-

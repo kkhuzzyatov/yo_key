@@ -1,13 +1,11 @@
-package ru.yo_key.uiElement.entity;
+package ru.yo_key.size.entity;
 
-public class UiElement {
+public class Size {
     private Integer id;
-    private String name;
     private String value;
 
-    public UiElement(Integer id, String name, String value) {
+    public Size(Integer id, String value) {
         this.id = id;
-        this.name = name;
         this.value = value;
     }
 
@@ -17,14 +15,6 @@ public class UiElement {
 
     public void setId(Integer id) {
         this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getValue() {

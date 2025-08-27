@@ -5,7 +5,6 @@ import ru.yo_key.segment.entity.Segment;
 import ru.yo_key.segment.repository.SegmentRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class SegmentService {
@@ -15,20 +14,12 @@ public class SegmentService {
         this.segmentRepository = segmentRepository;
     }
 
-    public Integer save(String value) {
-        return segmentRepository.save(new Segment(null, value));
+    public Integer save(Segment segment) {
+        return segmentRepository.save(segment);
     }
 
-    public String getValuesOfAll() {
-        List<Segment> segments = segmentRepository.getAll();
-        return segments.stream()
-                .map(segment -> segment.getValue())
-                .collect(Collectors.joining(" "));
-    }
-
-    public String getValue(Integer id) {
-        Segment segment = segmentRepository.get(id);
-        return segment != null ? segment.getValue() : "Segment not found";
+    public List<Segment> getAll() {
+        return segmentRepository.getAll();
     }
 
     public void delete(Integer id) {

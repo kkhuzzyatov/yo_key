@@ -19,9 +19,9 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.telegram:telegrambots:6.9.7.1'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation("org.postgresql:postgresql:42.6.0")
+	implementation 'org.springframework.session:spring-session-jdbc'
+	runtimeOnly 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

@@ -1,54 +1,685 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            overflow-x: hidden;
+        }
+
+        .icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .left-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background-color: white;
+            z-index: 1;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .segments-list, .sizes-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            margin-bottom: 20px;
+        }
+
+        .segment-item, .size-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .segment-item:hover, .size-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .segment-button, .size-button {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            margin-right: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #641310;
+            border-color: #641310;
+            position: relative;
+        }
+
+        .segment-button::after, .size-button::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .segment-button.inactive, .size-button.inactive {
+            background-color: white;
+            border-color: #ddd;
+        }
+
+        .segment-button.inactive::after, .size-button.inactive::after {
+            content: '';
+        }
+
+        .segment-text, .size-text {
+            font-size: 16px;
+            color: #323232;
+            flex: 1;
+        }
+
+        .main-content {
+            margin-left: 300px;
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+        }
+
+        .left-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .left-menu-overlay.active {
+            left: 0;
+            opacity: 1;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .close-button::before,
+        .close-button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #333;
+        }
+
+        .close-button::before {
+            transform: rotate(45deg);
+        }
+
+        .close-button::after {
+            transform: rotate(-45deg);
+        }
+
+        .menu-button {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            z-index: 2;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+        }
+
+        #product-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .product-item {
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .product-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            display: block;
+        }
+
+        .product-info {
+            padding: 15px;
+        }
+
+        .product-name {
+            font-size: 16px;
+            color: #323232;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        .horizontal-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .product-standard-price {
+            font-size: 14px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .product-price-with-discount {
+            font-size: 18px;
+            color: #641310;
+            font-weight: bold;
+        }
+
+        .product-discount {
+            font-size: 14px;
+            padding: 4px 8px;
+            color: #fff;
+            background-color: #641310;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .product-colors {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .product-color {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .product-color:hover {
+            transform: scale(1.1);
+            border-color: #323232;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 20px;
+            color: #641310;
+        }
+
+        .error {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 18px;
+            color: red;
+            text-align: center;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .left-menu {
+                width: 200px;
+            }
+
+            .main-content {
+                margin-left: 250px;
+            }
+
+            #product-container {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .product-info {
+                padding: 12px;
+            }
+
+            .product-name {
+                font-size: 15px;
+            }
+
+            .product-price-with-discount {
+                font-size: 16px;
+            }
+
+            .segment-text, .size-text {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .left-menu {
+                width: 200px;
+                padding: 15px;
+            }
+
+            .main-content {
+                margin-left: 200px;
+            }
+
+            #product-container {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 12px;
+            }
+
+            .horizontal-container {
+                gap: 8px;
+            }
+
+            .segment-item, .size-item {
+                padding: 10px 0;
+            }
+
+            .segment-text, .size-text {
+                font-size: 13px;
+            }
+        }
+    </style>
     <title>YoKey</title>
 </head>
 <body>
-    <div class="close-left-menu-screen">
-        <img src="" class="main-bg" id="main-bg">
-        <img src="left_menu_button.png" class="menu-button" id="leftMenuButton">
-        
-        <div class="discount-container">
-            <img src="main_discount_bg.png" class="discount-bg-image">
-            <div class="discount-text">
-                <div class="discount-description">ЛЕТНИЕ<br>СКИДКИ</div>
-                <div class="discount-percent">35%</div>
-            </div>
-        </div>
-        
-        <div class="catalog-label" id="catalogButton">КАТАЛОГ</div>
-    </div>
+<div class="left-menu">
+    <h4 style="margin-bottom: 10px; color: #641310;">Категории</h4>
+    <ul id="segments-list" class="segments-list">
 
-    <div class="open-left-menu-screen">
-        <div class="image-container">
-            <div class="left-menu">
-                <button class="close-button" id="closeButton">×</button>
-                
-                <div class="menu-content">
-                    <h1 class="menu-title" id="leftMenuHeader">Категории</h1>
-                    <ul class="menu-categories" id="menuCategories">
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="open-left-menu-screen-main-bg">
-                <img src="" id="open-left-menu-main-bg">
-                <div class="discount-container">
-                    <img src="main_discount_bg.png" class="discount-bg-image" alt="Discount Background">
-                    <div class="discount-text">
-                        <div class="discount-description">ЛЕТНИЕ<br>СКИДКИ</div>
-                        <div class="discount-percent">35%</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="open-left-menu-screen-catalog-label" id="openCatalogButton">КАТАЛОГ</div>
-        </div>
-    </div>
+    </ul>
 
-    <script src="script.js"></script>
+    <h4 style="margin: 20px 0 10px 0; color: #641310;">Размеры</h4>
+    <ul id="sizes-list" class="sizes-list">
+
+    </ul>
+</div>
+
+<div class="main-content">
+    <img src="icon.jpeg" class="icon">
+
+    <div id="product-container"></div>
+    <div id="loading" class="loading">Загрузка товаров...</div>
+    <div id="error" class="error" style="display: none;"></div>
+</div>
+
+<script>
+    class Size {
+        constructor(id, value, isActive = true) {
+            this.id = id;
+            this.value = value;
+            this.isActive = isActive;
+        }
+    }
+
+    async function fetchSizes() {
+        try {
+            const response = await fetch('http://localhost:8080/api/sizes/get_all');
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const sizesData = await response.json();
+
+            const sizes = sizesData.map(sizeData =>
+                new Size(sizeData.id, sizeData.value, false)
+            );
+
+            return sizes;
+
+        } catch (error) {
+            console.error('Ошибка при получении размеров:', error);
+            return [];
+        }
+    }
+
+    function createSizesList(sizes) {
+        const sizesList = document.getElementById('sizes-list');
+        sizesList.innerHTML = '';
+
+        sizes.forEach(size => {
+            const listItem = document.createElement('li');
+            listItem.className = 'size-item';
+
+            const button = document.createElement('div');
+            button.className = size.isActive ? 'size-button' : 'size-button inactive';
+
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                size.isActive = !size.isActive;
+                button.classList.toggle('inactive');
+                renderProducts(window.products, window.segments, window.sizes);
+            });
+
+            const text = document.createElement('span');
+            text.className = 'size-text';
+            text.textContent = size.value;
+
+            listItem.appendChild(button);
+            listItem.appendChild(text);
+
+            listItem.addEventListener('click', (e) => {
+                if (e.target !== button) {
+                    size.isActive = !size.isActive;
+                    button.classList.toggle('inactive');
+                    renderProducts(window.products, window.segments, window.sizes);
+                }
+            });
+
+            sizesList.appendChild(listItem);
+        });
+    }
+
+    class Segment {
+        constructor(id, value, isActive = true) {
+            this.id = id;
+            this.value = value;
+            this.isActive = isActive;
+        }
+    }
+
+    async function fetchSegments() {
+        try {
+            const response = await fetch('http://localhost:8080/api/segments/get_all');
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const segmentsData = await response.json();
+
+            const segments = segmentsData.map(segmentData =>
+                new Segment(segmentData.id, segmentData.value, true)
+            );
+
+            return segments;
+
+        } catch (error) {
+            console.error('Ошибка при получении сегментов:', error);
+            return [];
+        }
+    }
+
+    function createSegmentsList(segments) {
+        const segmentsList = document.getElementById('segments-list');
+        segmentsList.innerHTML = '';
+
+        segments.forEach(segment => {
+            const listItem = document.createElement('li');
+            listItem.className = 'segment-item';
+
+            const button = document.createElement('div');
+            button.className = segment.isActive ? 'segment-button' : 'segment-button inactive';
+
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                segment.isActive = !segment.isActive;
+                button.classList.toggle('inactive');
+                renderProducts(window.products, window.segments, window.sizes);
+            });
+
+            const text = document.createElement('span');
+            text.className = 'segment-text';
+            text.textContent = segment.value;
+
+            listItem.appendChild(button);
+            listItem.appendChild(text);
+
+            listItem.addEventListener('click', (e) => {
+                if (e.target !== button) {
+                    segment.isActive = !segment.isActive;
+                    button.classList.toggle('inactive');
+                    renderProducts(window.products, window.segments, window.sizes);
+                }
+            });
+
+            segmentsList.appendChild(listItem);
+        });
+    }
+
+    function renderProducts(products, segments, sizes) {
+        const productContainer = document.getElementById('product-container');
+        productContainer.innerHTML = '';
+
+        if (!products || !segments || !sizes) return;
+
+        const activeSegmentIds = segments
+            .filter(segment => segment.isActive)
+            .map(segment => segment.id);
+
+        const activeSizeValues = sizes
+            .filter(size => size.isActive)
+            .map(size => size.value);
+
+        products.forEach(product => {
+            const hasActiveSegment = activeSegmentIds.includes(product.segmentId);
+
+            const hasActiveSize = product.sizeValues && product.sizeValues.some(size =>
+                activeSizeValues.includes(size)
+            );
+
+            if (hasActiveSegment && (activeSizeValues.length === 0 || hasActiveSize)) {
+                const {
+                    nameText,
+                    standardPriceValue,
+                    discountPercent,
+                    sizeValues,
+                    mainImage,
+                    otherImages
+                } = product;
+
+                const discountedPrice = standardPriceValue * ((100 - discountPercent) / 100);
+
+                const productEl = document.createElement('div');
+                productEl.className = 'product-item';
+                productContainer.appendChild(productEl);
+
+                const productImageEl = document.createElement('img');
+                productImageEl.src = mainImage;
+                productImageEl.className = 'product-image';
+                productImageEl.alt = nameText;
+                productImageEl.loading = 'lazy';
+                productEl.appendChild(productImageEl);
+
+                productImageEl.dataset.originalSrc = mainImage;
+
+                productEl.addEventListener('mouseenter', function() {
+                    if (otherImages && otherImages.length > 0) {
+                        const randomImage = getRandomImage(otherImages);
+                        if (randomImage) {
+                            productImageEl.src = randomImage;
+                        }
+                    }
+                });
+
+                productEl.addEventListener('mouseleave', function() {
+                    productImageEl.src = productImageEl.dataset.originalSrc;
+                });
+
+                const productInfoEl = document.createElement('div');
+                productInfoEl.className = 'product-info';
+                productEl.appendChild(productInfoEl);
+
+                const productNameEl = document.createElement('div');
+                productNameEl.className = 'product-name';
+                productNameEl.textContent = nameText;
+                productInfoEl.appendChild(productNameEl);
+
+                const priceContainerEl = document.createElement('div');
+                priceContainerEl.className = 'horizontal-container';
+                productInfoEl.appendChild(priceContainerEl);
+
+                const standardPriceEl = document.createElement('div');
+                standardPriceEl.className = 'product-standard-price';
+                standardPriceEl.textContent = `${standardPriceValue.toFixed(2)} ₽`;
+                priceContainerEl.appendChild(standardPriceEl);
+
+                const discountPriceEl = document.createElement('div');
+                discountPriceEl.className = 'product-price-with-discount';
+                discountPriceEl.textContent = `${discountedPrice.toFixed(0)} ₽`;
+                priceContainerEl.appendChild(discountPriceEl);
+
+                const discountPercentEl = document.createElement('div');
+                discountPercentEl.className = 'product-discount';
+                discountPercentEl.textContent = `-${discountPercent}%`;
+                priceContainerEl.appendChild(discountPercentEl);
+
+                const sizesContainerEl = document.createElement('div');
+                sizesContainerEl.className = 'product-size';
+                productInfoEl.appendChild(sizesContainerEl);
+
+                if (sizeValues && sizeValues.length > 0) {
+                    const sizesText = sizeValues.join(' ● ');
+                    sizesContainerEl.textContent = sizesText;
+                } else {
+                    sizesContainerEl.textContent = 'Размеры не указаны';
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        const loadingElement = document.getElementById('loading');
+        const errorElement = document.getElementById('error');
+
+        try {
+            const segments = await fetchSegments();
+            createSegmentsList(segments);
+
+            window.segments = segments;
+
+            const sizes = await fetchSizes();
+            createSizesList(sizes);
+
+            window.sizes = sizes;
+
+            const products = await fetchProducts();
+
+            window.products = products;
+
+            loadingElement.style.display = 'none';
+
+            renderProducts(products, segments, sizes);
+
+        } catch (error) {
+            console.error('Ошибка:', error);
+            loadingElement.style.display = 'none';
+            errorElement.style.display = 'block';
+            errorElement.textContent = 'Ошибка загрузки данных';
+        }
+    });
+
+    function getActiveSegments() {
+        return window.segments ? window.segments.filter(segment => segment.isActive) : [];
+    }
+
+    function getInactiveSegments() {
+        return window.segments ? window.segments.filter(segment => !segment.isActive) : [];
+    }
+
+    class Product {
+        constructor(nameText, standardPriceValue, discountPercent, segmentId, sizeValues, mainImage, otherImages) {
+            this.nameText = nameText;
+            this.standardPriceValue = standardPriceValue;
+            this.discountPercent = discountPercent;
+            this.segmentId = segmentId;
+            this.sizeValues = sizeValues;
+            this.mainImage = mainImage;
+            this.otherImages = otherImages;
+        }
+    }
+
+    async function fetchProducts() {
+        try {
+            const response = await fetch('http://localhost:8080/api/products/get_all');
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const productsData = await response.json();
+
+            const products = productsData.map(productData => {
+                const mainImageObj = productData.images.find(img => img.main === true);
+                const mainImage = mainImageObj ? mainImageObj.imageLink : null;
+
+                const otherImages = productData.images
+                    .filter(img => img.main === false)
+                    .map(img => img.imageLink);
+
+                return new Product(
+                    productData.nameText,
+                    productData.standardPriceValue,
+                    productData.discountPercent,
+                    productData.segmentId,
+                    productData.sizeValues,
+                    mainImage,
+                    otherImages
+                );
+            });
+
+            return products;
+
+        } catch (error) {
+            console.error('Ошибка при получении данных:', error);
+            return [];
+        }
+    }
+
+    function getRandomImage(images) {
+        if (!images || images.length === 0) return null;
+        const randomIndex = Math.floor(Math.random() * images.length);
+        return images[randomIndex];
+    }
+</script>
 </body>
 </html>
