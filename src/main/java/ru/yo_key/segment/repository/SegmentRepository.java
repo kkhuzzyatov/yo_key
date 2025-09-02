@@ -1,11 +1,7 @@
 package ru.yo_key.segment.repository;
 
-import ru.yo_key.segment.entity.Segment;
+import org.springframework.data.jpa.repository.JpaRepository;
+import ru.yo_key.segment.model.Segment;
 
-import java.util.List;
-
-public interface SegmentRepository {
-    Integer save(Segment segment);
-    List<Segment> getAll();
-    void delete(Integer id);
+public interface SegmentRepository extends JpaRepository<Segment, Integer> {
 }

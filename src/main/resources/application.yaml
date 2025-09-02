@@ -1,0 +1,13 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: yo_key
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/yo_key
+    username: postgres
+    password: 1234
+  jpa:
+    hibernate:
+      ddl-auto: update

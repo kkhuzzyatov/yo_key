@@ -1,12 +1,7 @@
 package ru.yo_key.product.repository;
 
-import ru.yo_key.product.entity.Product;
+import org.springframework.data.jpa.repository.JpaRepository;
+import ru.yo_key.product.model.Product;
 
-import java.util.List;
-
-public interface ProductRepository {
-    Integer save(Product product);
-    List<Product> getBySegmentName(String segmentName);
-    List<Product> getAll();
-    void delete(Integer id);
+public interface ProductRepository extends JpaRepository<Product, Integer> {
 }

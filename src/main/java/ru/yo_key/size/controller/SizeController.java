@@ -1,35 +1,39 @@
 package ru.yo_key.size.controller;
 
+import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.yo_key.size.entity.Size;
+import ru.yo_key.size.dto.SizeDto;
 import ru.yo_key.size.service.SizeService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/sizes")
+@AllArgsConstructor
 public class SizeController {
-    private final SizeService sizeService;
+    private SizeService service;
 
-    public SizeController(SizeService sizeService) {
-        this.sizeService = sizeService;
+    @CrossOrigin(origins = "*")
+    @GetMapping("/find_all")
+    public List<SizeDto> findAll() {
+        return service.findAll();
     }
 
     @CrossOrigin(origins = "*")
     @PostMapping("/save")
-    public Integer saveSize(@RequestBody Size size) {
-        return sizeService.save(size);
+    public void save(@RequestBody SizeDto sizeDto) {
+        service.save(sizeDto);
     }
 
     @CrossOrigin(origins = "*")
-    @GetMapping("/get_all")
-    public List<Size> getAll() {
-        return sizeService.getAll();
+    @PutMapping("/update")
+    public void update(@RequestBody SizeDto sizeDto) {
+        service.update(sizeDto);
     }
 
     @CrossOrigin(origins = "*")
-    @DeleteMapping("/delete")
-    public void delete(@RequestParam Integer id) {
-        sizeService.delete(id);
+    @PostMapping("/delete")
+    public void delete(@RequestBody Integer id) {
+        service.deleteById(id);
     }
 }

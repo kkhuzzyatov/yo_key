@@ -1,11 +1,7 @@
 package ru.yo_key.size.repository;
 
-import ru.yo_key.size.entity.Size;
+import org.springframework.data.jpa.repository.JpaRepository;
+import ru.yo_key.size.model.Size;
 
-import java.util.List;
-
-public interface SizeRepository {
-    Integer save(Size size);
-    List<Size> getAll();
-    void delete(Integer id);
+public interface SizeRepository extends JpaRepository<Size, Integer> {
 }

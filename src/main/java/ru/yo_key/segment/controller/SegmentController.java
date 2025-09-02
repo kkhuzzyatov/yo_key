@@ -1,35 +1,39 @@
 package ru.yo_key.segment.controller;
 
+import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.yo_key.segment.entity.Segment;
+import ru.yo_key.segment.dto.SegmentDto;
 import ru.yo_key.segment.service.SegmentService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/segments")
+@AllArgsConstructor
 public class SegmentController {
-    private final SegmentService segmentService;
+    private SegmentService service;
 
-    public SegmentController(SegmentService segmentService) {
-        this.segmentService = segmentService;
+    @CrossOrigin(origins = "*")
+    @GetMapping("/find_all")
+    public List<SegmentDto> findAll() {
+        return service.findAll();
     }
 
     @CrossOrigin(origins = "*")
     @PostMapping("/save")
-    public Integer saveSegment(@RequestBody Segment segment) {
-        return segmentService.save(segment);
+    public void save(@RequestBody SegmentDto segmentDTO) {
+        service.save(segmentDTO);
     }
 
     @CrossOrigin(origins = "*")
-    @GetMapping("/get_all")
-    public List<Segment> getAll() {
-        return segmentService.getAll();
+    @PutMapping("/update")
+    public void update(@RequestBody SegmentDto segmentDTO) {
+        service.update(segmentDTO);
     }
 
     @CrossOrigin(origins = "*")
-    @DeleteMapping("/delete")
-    public void delete(@RequestParam Integer id) {
-        segmentService.delete(id);
+    @PostMapping("/delete")
+    public void delete(@RequestBody Integer id) {
+        service.deleteById(id);
     }
 }
