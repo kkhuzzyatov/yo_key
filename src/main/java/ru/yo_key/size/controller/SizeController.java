@@ -32,8 +32,8 @@ public class SizeController {
     }
 
     @CrossOrigin(origins = "*")
-    @PostMapping("/delete")
-    public void delete(@RequestBody Integer id) {
+    @DeleteMapping("/delete")
+    public void delete(@RequestParam Integer id) {
         service.deleteById(id);
     }
 }
