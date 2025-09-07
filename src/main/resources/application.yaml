@@ -5,9 +5,12 @@ spring:
     name: yo_key
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/yo_key
+    url: jdbc:postgresql://178.250.156.180:5432/postgres
     username: postgres
     password: 1234
   jpa:
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
