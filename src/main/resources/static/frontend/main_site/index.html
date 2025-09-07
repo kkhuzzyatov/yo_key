@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Стили остаются без изменений */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            overflow-x: hidden;
+        }
+
+        .icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .left-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background-color: white;
+            z-index: 1;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .segments-list, .sizes-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            margin-bottom: 20px;
+        }
+
+        .segment-item, .size-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .segment-item:hover, .size-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .segment-button, .size-button {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            margin-right: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #641310;
+            border-color: #641310;
+            position: relative;
+        }
+
+        .segment-button::after, .size-button::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .segment-button.inactive, .size-button.inactive {
+            background-color: white;
+            border-color: #ddd;
+        }
+
+        .segment-button.inactive::after, .size-button.inactive::after {
+            content: '';
+        }
+
+        .segment-text, .size-text {
+            font-size: 16px;
+            color: #323232;
+            flex: 1;
+        }
+
+        .main-content {
+            margin-left: 300px;
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+        }
+
+        .left-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .left-menu-overlay.active {
+            left: 0;
+            opacity: 1;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .close-button::before,
+        .close-button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #333;
+        }
+
+        .close-button::before {
+            transform: rotate(45deg);
+        }
+
+        .close-button::after {
+            transform: rotate(-45deg);
+        }
+
+        .menu-button {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            z-index: 2;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+        }
+
+        #products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .product-item {
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            display: block;
+        }
+
+        .product-info {
+            padding: 15px;
+        }
+
+        .product-name {
+            font-size: 16px;
+            color: #323232;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        .horizontal-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .product-standard-price {
+            font-size: 14px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .product-price-with-discount {
+            font-size: 18px;
+            color: #641310;
+            font-weight: bold;
+        }
+
+        .product-discount {
+            font-size: 14px;
+            padding: 4px 8px;
+            color: #fff;
+            background-color: #641310;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .product-colors {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .product-color {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .product-color:hover {
+            transform: scale(1.1);
+            border-color: #323232;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 20px;
+            color: #641310;
+        }
+
+        .error {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 18px;
+            color: red;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Стили для экрана товара */
+        #product-screen {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .product-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+
+        .gallery {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .thumbnails {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .thumbnails img {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 4px;
+        }
+
+        .thumbnails img.active {
+            border-color: #641310;
+        }
+
+        .main-image {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .product-info-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .product-title {
+            font-size: 24px;
+            color: #323232;
+            margin-bottom: 20px;
+        }
+
+        .price-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .standard-price {
+            font-size: 18px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .discount-price {
+            font-size: 24px;
+            color: #641310;
+            font-weight: bold;
+        }
+
+        .sizes-container {
+            margin-bottom: 25px;
+        }
+
+        .sizes-title {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #323232;
+            font-weight: 500;
+        }
+
+        .sizes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .size-btn {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .size-btn:hover {
+            border-color: #641310;
+        }
+
+        .size-btn.selected {
+            background-color: #641310;
+            color: white;
+            border-color: #641310;
+        }
+
+        .add-to-cart {
+            padding: 15px 30px;
+            background-color: #641310;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .add-to-cart:hover:not(:disabled) {
+            background-color: #4a0e0c;
+        }
+
+        .add-to-cart:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .back-button {
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .no-products {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .left-menu {
+                width: 200px;
+            }
+
+            .main-content {
+                margin-left: 250px;
+            }
+
+            #products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .product-info {
+                padding: 12px;
+            }
+
+            .product-name {
+                font-size: 15px;
+            }
+
+            .product-price-with-discount {
+                font-size: 16px;
+            }
+
+            .segment-text, .size-text {
+                font-size: 14px;
+            }
+
+            .product-container {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .left-menu {
+                width: 200px;
+                padding: 15px;
+            }
+
+            .main-content {
+                margin-left: 200px;
+            }
+
+            #products-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 12px;
+            }
+
+            .horizontal-container {
+                gap: 8px;
+            }
+
+            .segment-item, .size-item {
+                padding: 10px 0;
+            }
+
+            .segment-text, .size-text {
+                font-size: 13px;
+            }
+        }
+    </style>
+    <title>main-site</title>
+</head>
+<body>
+    <!-- Главный экран со списком товаров -->
+    <div id="main-screen">
+        <div class="left-menu">
+            <h4 style="margin-bottom: 10px; color: #641310;">Категории</h4>
+            <ul id="segments-list" class="segments-list"></ul>
+
+            <h4 style="margin: 20px 0 10px 0; color: #641310;">Размеры</h4>
+            <ul id="sizes-list" class="sizes-list"></ul>
+        </div>
+
+        <div class="main-content">
+            <img src="icon.jpeg" class="icon">
+
+            <div id="products-grid"></div>
+            <div id="loading" class="loading">Загрузка товаров...</div>
+            <div id="error" class="error" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Экран отдельного товара -->
+    <div id="product-screen">
+        <button class="back-button" id="back-button">← Назад к каталогу</button>
+        
+        <div class="loading" id="product-loading">Загрузка данных...</div>
+        <div class="error" id="product-error" style="display: none;"></div>
+        
+        <div class="product-container" id="product-container" style="display: none;">
+            <div class="gallery">
+                <div class="thumbnails" id="thumbnails"></div>
+                <img src="" alt="" class="main-image" id="main-image">
+            </div>
+            
+            <div class="product-info-panel">
+                <h1 class="product-title" id="product-title"></h1>
+                
+                <div class="price-container">
+                    <div class="standard-price" id="standard-price"></div>
+                    <div class="discount-price" id="discount-price"></div>
+                </div>
+                
+                <div class="sizes-container">
+                    <div class="sizes-title">Выберите размер:</div>
+                    <div class="sizes" id="sizes-container"></div>
+                </div>
+                
+                <button class="add-to-cart" id="add-to-cart" disabled>Купить</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Классы данных
+    class Size {
+        constructor(id, value, isActive = false) {
+            this.id = id;
+            this.value = value;
+            this.isActive = isActive;
+        }
+    }
+
+    class Segment {
+        constructor(id, value, isActive = false) {
+            this.id = id;
+            this.value = value;
+            this.isActive = isActive;
+        }
+    }
+
+    class Product {
+        constructor(id, nameText, standardPriceValue, discountPriceValue, segmentId, sizeIds, mainImageLink, otherImageLinks) {
+            this.id = id;
+            this.nameText = nameText;
+            this.standardPriceValue = standardPriceValue;
+            this.discountPriceValue = discountPriceValue;
+            this.segmentId = segmentId;
+            this.sizeIds = sizeIds;
+            this.mainImageLink = mainImageLink;
+            this.otherImageLinks = otherImageLinks;
+        }
+    }
+
+    // Глобальные переменные
+    let products = [];
+    let segments = [];
+    let sizes = [];
+    let sizesMap = {};
+    let selectedProduct = null;
+    let selectedSize = null;
+    let hasActiveSizes = false;
+    let hasActiveSegments = false; // Флаг для отслеживания выбранных категорий
+
+    // Функции для загрузки данных
+    async function fetchSizes() {
+        try {
+            const response = await fetch('http://178.250.156.180:8080/api/sizes/find_all');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const sizesData = await response.json();
+            return sizesData.map(sizeData => new Size(sizeData.id, sizeData.value, false));
+        } catch (error) {
+            console.error('Ошибка при получении размеров:', error);
+            return [];
+        }
+    }
+
+    async function fetchSegments() {
+        try {
+            const response = await fetch('http://178.250.156.180:8080/api/segments/find_all');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const segmentsData = await response.json();
+            return segmentsData.map(segmentData => new Segment(segmentData.id, segmentData.value, false));
+        } catch (error) {
+            console.error('Ошибка при получении сегментов:', error);
+            return [];
+        }
+    }
+
+    async function fetchProducts() {
+        try {
+            const response = await fetch('http://178.250.156.180:8080/api/products/find_all');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const productsData = await response.json();
+            return productsData.map(productData => 
+                new Product(
+                    productData.id,
+                    productData.nameText,
+                    productData.standardPriceValue,
+                    productData.discountPriceValue,
+                    productData.segmentId,
+                    productData.sizeIds,
+                    productData.mainImageLink,
+                    productData.otherImageLinks
+                )
+            );
+        } catch (error) {
+            console.error('Ошибка при получении данных:', error);
+            return [];
+        }
+    }
+
+    // Функции отображения
+    function createSizesList(sizesArray) {
+        const sizesList = document.getElementById('sizes-list');
+        sizesList.innerHTML = '';
+
+        sizesArray.forEach(size => {
+            const listItem = document.createElement('li');
+            listItem.className = 'size-item';
+
+            const button = document.createElement('div');
+            button.className = size.isActive ? 'size-button' : 'size-button inactive';
+
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                size.isActive = !size.isActive;
+                button.classList.toggle('inactive');
+                
+                // Проверяем, есть ли активные размеры
+                hasActiveSizes = sizes.some(s => s.isActive);
+                
+                renderProducts();
+            });
+
+            const text = document.createElement('span');
+            text.className = 'size-text';
+            text.textContent = size.value;
+
+            listItem.appendChild(button);
+            listItem.appendChild(text);
+
+            listItem.addEventListener('click', (e) => {
+                if (e.target !== button) {
+                    size.isActive = !size.isActive;
+                    button.classList.toggle('inactive');
+                    
+                    // Проверяем, есть ли активные размеры
+                    hasActiveSizes = sizes.some(s => s.isActive);
+                    
+                    renderProducts();
+                }
+            });
+
+            sizesList.appendChild(listItem);
+        });
+    }
+
+    function createSegmentsList(segmentsArray) {
+        const segmentsList = document.getElementById('segments-list');
+        segmentsList.innerHTML = '';
+
+        segmentsArray.forEach(segment => {
+            const listItem = document.createElement('li');
+            listItem.className = 'segment-item';
+
+            const button = document.createElement('div');
+            button.className = segment.isActive ? 'segment-button' : 'segment-button inactive';
+
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                segment.isActive = !segment.isActive;
+                button.classList.toggle('inactive');
+                
+                // Проверяем, есть ли активные категории
+                hasActiveSegments = segments.some(s => s.isActive);
+                
+                renderProducts();
+            });
+
+            const text = document.createElement('span');
+            text.className = 'segment-text';
+            text.textContent = segment.value;
+
+            listItem.appendChild(button);
+            listItem.appendChild(text);
+
+            listItem.addEventListener('click', (e) => {
+                if (e.target !== button) {
+                    segment.isActive = !segment.isActive;
+                    button.classList.toggle('inactive');
+                    
+                    // Проверяем, есть ли активные категории
+                    hasActiveSegments = segments.some(s => s.isActive);
+                    
+                    renderProducts();
+                }
+            });
+
+            segmentsList.appendChild(listItem);
+        });
+    }
+
+    function renderProducts() {
+        const productsGrid = document.getElementById('products-grid');
+        productsGrid.innerHTML = '';
+
+        if (!products.length || !segments.length || !sizes.length) return;
+
+        let filteredProducts = [];
+
+        if (!hasActiveSegments) {
+            // Если нет выбранных категорий - показываем все товары
+            filteredProducts = [...products];
+        } else {
+            // Если есть выбранные категории - фильтруем по ним
+            const activeSegmentIds = segments
+                .filter(segment => segment.isActive)
+                .map(segment => segment.id);
+
+            filteredProducts = products.filter(product => 
+                activeSegmentIds.includes(product.segmentId)
+            );
+        }
+
+        // Дополнительная фильтрация по размерам (если есть активные размеры)
+        if (hasActiveSizes) {
+            const activeSizeIds = sizes
+                .filter(size => size.isActive)
+                .map(size => size.id);
+
+            filteredProducts = filteredProducts.filter(product => 
+                product.sizeIds && product.sizeIds.some(sizeId =>
+                    activeSizeIds.includes(sizeId)
+                )
+            );
+        }
+
+        if (filteredProducts.length === 0) {
+            productsGrid.innerHTML = '<div class="no-products">Товары не найдены</div>';
+            return;
+        }
+
+        filteredProducts.forEach(product => {
+            const {
+                id,
+                nameText,
+                standardPriceValue,
+                discountPriceValue,
+                mainImageLink,
+                otherImageLinks
+            } = product;
+
+            const discountPercent = Math.round((1 - discountPriceValue / standardPriceValue) * 100);
+
+            const productEl = document.createElement('div');
+            productEl.className = 'product-item';
+            productEl.addEventListener('click', () => showProductScreen(id));
+            productsGrid.appendChild(productEl);
+
+            const productImageEl = document.createElement('img');
+            productImageEl.src = mainImageLink;
+            productImageEl.className = 'product-image';
+            productImageEl.alt = nameText;
+            productImageEl.loading = 'lazy';
+            productEl.appendChild(productImageEl);
+
+            productImageEl.dataset.originalSrc = mainImageLink;
+
+            productEl.addEventListener('mouseenter', function() {
+                if (otherImageLinks && otherImageLinks.length > 0) {
+                    const randomImage = getRandomImage(otherImageLinks);
+                    if (randomImage) {
+                        productImageEl.src = randomImage;
+                    }
+                }
+            });
+
+            productEl.addEventListener('mouseleave', function() {
+                productImageEl.src = productImageEl.dataset.originalSrc;
+            });
+
+            const productInfoEl = document.createElement('div');
+            productInfoEl.className = 'product-info';
+            productEl.appendChild(productInfoEl);
+
+            const productNameEl = document.createElement('div');
+            productNameEl.className = 'product-name';
+            productNameEl.textContent = nameText;
+            productInfoEl.appendChild(productNameEl);
+
+            const priceContainerEl = document.createElement('div');
+            priceContainerEl.className = 'horizontal-container';
+            productInfoEl.appendChild(priceContainerEl);
+
+            const standardPriceEl = document.createElement('div');
+            standardPriceEl.className = 'product-standard-price';
+            standardPriceEl.textContent = `${standardPriceValue.toFixed(2)} ₽`;
+            priceContainerEl.appendChild(standardPriceEl);
+
+            const discountPriceEl = document.createElement('div');
+            discountPriceEl.className = 'product-price-with-discount';
+            discountPriceEl.textContent = `${discountPriceValue.toFixed(0)} ₽`;
+            priceContainerEl.appendChild(discountPriceEl);
+
+            const discountPercentEl = document.createElement('div');
+            discountPercentEl.className = 'product-discount';
+            discountPercentEl.textContent = `-${discountPercent}%`;
+            priceContainerEl.appendChild(discountPercentEl);
+
+            const sizesContainerEl = document.createElement('div');
+            sizesContainerEl.className = 'product-size';
+            sizesContainerEl.style.marginTop = '10px';
+            sizesContainerEl.style.fontSize = '14px';
+            sizesContainerEl.style.color = '#666';
+            productInfoEl.appendChild(sizesContainerEl);
+
+            if (product.sizeIds && product.sizeIds.length > 0) {
+                const sizeValues = product.sizeIds.map(sizeId => sizesMap[sizeId]).filter(Boolean);
+                const sizesText = sizeValues.join(' ● ');
+                sizesContainerEl.textContent = sizesText;
+            } else {
+                sizesContainerEl.textContent = 'Размеры не указаны';
+            }
+        });
+    }
+
+    // Функции для экрана товара
+    function formatPrice(price) {
+        return new Intl.NumberFormat('ru-RU', {
+            style: 'currency',
+            currency: 'RUB',
+            minimumFractionDigits: 0
+        }).format(price);
+    }
+
+    async function showProductScreen(productId) {
+        // Переключение экранов
+        document.getElementById('main-screen').style.display = 'none';
+        document.getElementById('product-screen').style.display = 'block';
+        
+        const loadingElement = document.getElementById('product-loading');
+        const errorElement = document.getElementById('product-error');
+        const productContainer = document.getElementById('product-container');
+        const thumbnailsContainer = document.getElementById('thumbnails');
+        const mainImage = document.getElementById('main-image');
+        const productTitle = document.getElementById('product-title');
+        const standardPriceEl = document.getElementById('standard-price');
+        const discountPriceEl = document.getElementById('discount-price');
+        const sizesContainer = document.getElementById('sizes-container');
+        const addToCartButton = document.getElementById('add-to-cart');
+
+        loadingElement.style.display = 'flex';
+        errorElement.style.display = 'none';
+        productContainer.style.display = 'none';
+
+        try {
+            // Находим продукт
+            selectedProduct = products.find(p => p.id === productId);
+            if (!selectedProduct) {
+                throw new Error(`Продукт с id ${productId} не найден`);
+            }
+
+            // Отображаем данные
+            const allImages = [selectedProduct.mainImageLink, ...selectedProduct.otherImageLinks];
+            thumbnailsContainer.innerHTML = '';
+            
+            allImages.forEach((imageSrc, index) => {
+                const img = document.createElement('img');
+                img.src = imageSrc;
+                img.className = index === 0 ? 'active' : '';
+                img.alt = `Изображение ${index + 1}`;
+                img.onclick = () => changeMainImage(imageSrc, img);
+                thumbnailsContainer.appendChild(img);
+            });
+            
+            mainImage.src = selectedProduct.mainImageLink;
+            productTitle.textContent = selectedProduct.nameText;
+            standardPriceEl.textContent = formatPrice(selectedProduct.standardPriceValue);
+            discountPriceEl.textContent = formatPrice(selectedProduct.discountPriceValue);
+            
+            // Создаем кнопки размеров
+            sizesContainer.innerHTML = '';
+            selectedProduct.sizeIds.forEach(sizeId => {
+                if (sizesMap[sizeId]) {
+                    const button = document.createElement('button');
+                    button.className = 'size-btn';
+                    button.textContent = sizesMap[sizeId];
+                    button.onclick = () => selectSize(button, sizeId);
+                    sizesContainer.appendChild(button);
+                }
+            });
+            
+            // Сбрасываем выбранный размер
+            selectedSize = null;
+            addToCartButton.disabled = true;
+            
+            // Показываем контейнер с продуктом
+            loadingElement.style.display = 'none';
+            productContainer.style.display = 'flex';
+            
+        } catch (error) {
+            console.error('Ошибка:', error);
+            loadingElement.style.display = 'none';
+            errorElement.style.display = 'block';
+            errorElement.textContent = error.message;
+        }
+    }
+
+    function changeMainImage(imageSrc, clickedThumbnail) {
+        const mainImage = document.getElementById('main-image');
+        mainImage.src = imageSrc;
+        
+        document.querySelectorAll('#thumbnails img').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        
+        clickedThumbnail.classList.add('active');
+    }
+
+    function selectSize(button, sizeId) {
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        
+        button.classList.add('selected');
+        selectedSize = sizeId;
+        
+        document.getElementById('add-to-cart').disabled = false;
+    }
+
+    function goToMainScreen() {
+        document.getElementById('product-screen').style.display = 'none';
+        document.getElementById('main-screen').style.display = 'block';
+    }
+
+    function getRandomImage(images) {
+        if (!images || images.length === 0) return null;
+        const randomIndex = Math.floor(Math.random() * images.length);
+        return images[randomIndex];
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', async function() {
+        const loadingElement = document.getElementById('loading');
+        const errorElement = document.getElementById('error');
+        
+        try {
+            // Загружаем данные
+            segments = await fetchSegments();
+            createSegmentsList(segments);
+
+            sizes = await fetchSizes();
+            createSizesList(sizes);
+            
+            // Создаем карту размеров
+            sizes.forEach(size => {
+                sizesMap[size.id] = size.value;
+            });
+            
+            products = await fetchProducts();
+            
+            // Изначально нет активных категорий и размеров
+            hasActiveSegments = false;
+            hasActiveSizes = false;
+            
+            // Рендерим продукты (показываем все товары)
+            renderProducts();
+            
+            // Скрываем индикатор загрузки
+            loadingElement.style.display = 'none';
+            
+        } catch (error) {
+            console.error('Ошибка:', error);
+            loadingElement.style.display = 'none';
+            errorElement.style.display = 'block';
+            errorElement.textContent = 'Ошибка загрузки данных';
+        }
+        
+        // Обработчик кнопки "Назад"
+        document.getElementById('back-button').addEventListener('click', goToMainScreen);
+        
+        // Обработчик кнопки добавления в корзину
+        document.getElementById('add-to-cart').addEventListener('click', function() {
+            if (selectedSize && selectedProduct) {
+                alert(`Товар "${selectedProduct.nameText}" размера ${sizesMap[selectedSize]} добавлен в корзину!`);
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>admin-site</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .block { border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+    .block-header { background: #f5f5f5; padding: 10px; cursor: pointer; font-weight: bold; user-select: none; }
+    .block-content { display: none; padding: 10px; }
+    .item { border-bottom: 1px solid #ddd; padding: 10px 0; position: relative; }
+    .item:last-child { border-bottom: none; }
+    .label { font-weight: bold; margin-top: 5px; }
+    .images { margin-top: 5px; }
+    .image-link { display: flex; align-items: center; margin: 2px 0; }
+    .image-link input, .image-link span, .image-link select { flex-grow: 1; font-size: 0.9em; }
+    .remove-btn { cursor: pointer; color: red; font-weight: bold; font-size: 16px; border: none; background: none; margin-left: 8px; }
+    .item > .remove-btn { position: absolute; right: 10px; top: 10px; }
+    .add-btn, .update-btn, .save-btn { margin-top: 5px; padding: 4px 8px; font-size: 13px; cursor: pointer; }
+    .update-btn { background: #007bff; color: white; border: none; border-radius: 4px; }
+    .save-btn { background: #28a745; color: white; border: none; border-radius: 4px; }
+    .add-global-btn { margin: 10px 0; padding: 6px 10px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; display: none; }
+    
+    /* Стили для модального окна подтверждения */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .modal-button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .modal-button.confirm {
+      background: #dc3545;
+      color: white;
+    }
+    .modal-button.cancel {
+      background: #6c757d;
+      color: white;
+    }
+    .loading { opacity: 0.6; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="block" id="products-block">
+    <div class="block-header">► Продукты</div>
+    <button id="add-product-btn" class="add-global-btn">Добавить продукт</button>
+    <div class="block-content" id="products"></div>
+  </div>
+
+  <div class="block" id="sizes-block">
+    <div class="block-header">► Размеры</div>
+    <button id="add-size-btn" class="add-global-btn">Добавить размер</button>
+    <div class="block-content" id="sizes"></div>
+  </div>
+
+  <div class="block" id="segments-block">
+    <div class="block-header">► Категории</div>
+    <button id="add-segment-btn" class="add-global-btn">Добавить категорию</button>
+    <div class="block-content" id="segments"></div>
+  </div>
+
+  <script>
+    class Product {
+      constructor(id, nameText, standardPriceValue, discountPriceValue, segmentId, sizeIds, mainImageLink, otherImageLinks) {
+        this.id = id;
+        this.nameText = nameText;
+        this.standardPriceValue = standardPriceValue;
+        this.discountPriceValue = discountPriceValue;
+        this.segmentId = segmentId;
+        this.sizeIds = sizeIds;
+        this.mainImageLink = mainImageLink;
+        this.otherImageLinks = otherImageLinks;
+      }
+    }
+    class Segment { constructor(id, value) { this.id = id; this.value = value; } }
+    class Size { constructor(id, value) { this.id = id; this.value = value; } }
+
+    const API_BASE = 'http://178.250.156.180:8080/api';
+
+    class ApiService {
+      // Продукты
+      static async saveProduct(product) {
+        const response = await fetch(`${API_BASE}/products/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nameText: product.nameText,
+            standardPriceValue: parseFloat(product.standardPriceValue),
+            discountPriceValue: parseFloat(product.discountPriceValue),
+            segmentId: parseInt(product.segmentId),
+            sizeIds: product.sizeIds.map(id => parseInt(id)),
+            mainImageLink: product.mainImageLink,
+            otherImageLinks: product.otherImageLinks
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Проверяем, есть ли тело ответа
+        const contentLength = response.headers.get('Content-Length');
+        if (contentLength && parseInt(contentLength) > 0) {
+          return response.json();
+        }
+        return null;
+      }
+
+      static async updateProduct(product) {
+        const response = await fetch(`${API_BASE}/products/update`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: parseInt(product.id),
+            nameText: product.nameText,
+            standardPriceValue: parseFloat(product.standardPriceValue),
+            discountPriceValue: parseFloat(product.discountPriceValue),
+            segmentId: parseInt(product.segmentId),
+            sizeIds: product.sizeIds.map(id => parseInt(id)),
+            mainImageLink: product.mainImageLink,
+            otherImageLinks: product.otherImageLinks
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentLength = response.headers.get('Content-Length');
+        if (contentLength && parseInt(contentLength) > 0) {
+          return response.json();
+        }
+        return null;
+      }
+
+      static async deleteProduct(id) {
+        const response = await fetch(`${API_BASE}/products/delete?id=${id}`, {
+          method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentLength = response.headers.get('Content-Length');
+        if (contentLength && parseInt(contentLength) > 0) {
+          return response.json();
+        }
+        return null;
+      }
+
+      // Категории
+      static async saveSegment(segment) {
+        const response = await fetch(`${API_BASE}/segments/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: segment.value })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentLength = response.headers.get('Content-Length');
+        if (contentLength && parseInt(contentLength) > 0) {
+          return response.json();
+        }
+        return null;
+      }
+
+      static async deleteSegment(id) {
+        const response = await fetch(`${API_BASE}/segments/delete?id=${id}`, {
+          method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentLength = response.headers.get('Content-Length');
+        if (contentLength && parseInt(contentLength) > 0) {
+          return response.json();
+        }
+        return null;
+      }
+
+      // Размеры
+      static async saveSize(size) {
+        const response = await fetch(`${API_BASE}/sizes/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: size.value })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentLength = response.headers.get('Content-Length');
+        if (contentLength && parseInt(contentLength) > 0) {
+          return response.json();
+        }
+        return null;
+      }
+
+      static async deleteSize(id) {
+        const response = await fetch(`${API_BASE}/sizes/delete?id=${id}`, {
+          method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentLength = response.headers.get('Content-Length');
+        if (contentLength && parseInt(contentLength) > 0) {
+          return response.json();
+        }
+        return null;
+      }
+    }
+
+    class DataLoader {
+      constructor(apiBase) { this.apiBase = apiBase; }
+      async getProducts() {
+        const res = await fetch(`${this.apiBase}/products/find_all`);
+        const data = await res.json();
+        return data.map(p => new Product(p.id, p.nameText, p.standardPriceValue, p.discountPriceValue, p.segmentId, p.sizeIds, p.mainImageLink, p.otherImageLinks));
+      }
+      async getSegments() {
+        const res = await fetch(`${this.apiBase}/segments/find_all`);
+        const data = await res.json();
+        return data.map(s => new Segment(s.id, s.value));
+      }
+      async getSizes() {
+        const res = await fetch(`${this.apiBase}/sizes/find_all`);
+        const data = await res.json();
+        return data.map(s => new Size(s.id, s.value));
+      }
+    }
+
+    function setupToggleBlocks() {
+      document.querySelectorAll('.block-header').forEach(header => {
+        header.addEventListener('click', () => {
+          const block = header.parentElement;
+          const addBtn = block.querySelector('.add-global-btn');
+          const content = block.querySelector('.block-content');
+          const isOpen = content.style.display === 'block';
+
+          content.style.display = isOpen ? 'none' : 'block';
+          header.textContent = (isOpen ? '► ' : '▼ ') + header.textContent.slice(2);
+
+          if (addBtn) addBtn.style.display = isOpen ? 'none' : 'inline-block';
+        });
+      });
+    }
+
+    function createRemoveButton(onRemove, isProduct = false) {
+      const btn = document.createElement('button');
+      btn.className = 'remove-btn';
+      btn.textContent = '✖';
+      btn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showConfirmationModal(isProduct ? 'Удалить этот продукт?' : 'Удалить этот элемент?', onRemove);
+      };
+      return btn;
+    }
+
+    // Функция для показа модального окна подтверждения
+    function showConfirmationModal(message, onConfirm) {
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      
+      const content = document.createElement('div');
+      content.className = 'modal-content';
+      
+      const messageElement = document.createElement('p');
+      messageElement.textContent = message;
+      content.appendChild(messageElement);
+      
+      const buttons = document.createElement('div');
+      buttons.className = 'modal-buttons';
+      
+      const confirmButton = document.createElement('button');
+      confirmButton.className = 'modal-button confirm';
+      confirmButton.textContent = 'Удалить';
+      confirmButton.onclick = () => {
+        document.body.removeChild(overlay);
+        onConfirm();
+      };
+      
+      const cancelButton = document.createElement('button');
+      cancelButton.className = 'modal-button cancel';
+      cancelButton.textContent = 'Отмена';
+      cancelButton.onclick = () => {
+        document.body.removeChild(overlay);
+      };
+      
+      buttons.appendChild(cancelButton);
+      buttons.appendChild(confirmButton);
+      content.appendChild(buttons);
+      overlay.appendChild(content);
+      
+      document.body.appendChild(overlay);
+    }
+
+    let products = [], segments = [], sizes = [];
+
+    // Функция для сохранения текущих значений полей продукта
+    function saveProductInputValues(product) {
+      const productElement = document.querySelector(`.product-item[data-id="${product.id || 'new'}"]`);
+      if (!productElement) return;
+      
+      // Сохраняем основные поля
+      product.nameText = productElement.querySelector('.name-input').value;
+      product.mainImageLink = productElement.querySelector('.main-image-input').value;
+      product.standardPriceValue = productElement.querySelector('.standard-price-input').value;
+      product.discountPriceValue = productElement.querySelector('.discount-price-input').value;
+      product.segmentId = productElement.querySelector('.segment-select').value;
+      
+      // Сохраняем другие изображения
+      const otherImageInputs = productElement.querySelectorAll('.other-image-input');
+      product.otherImageLinks = Array.from(otherImageInputs).map(input => input.value);
+      
+      // Сохраняем размеры
+      const sizeSelects = productElement.querySelectorAll('.size-select');
+      product.sizeIds = Array.from(sizeSelects).map(select => select.value);
+    }
+
+    // Функция для проверки валидности данных продукта
+    function validateProduct(product) {
+      if (!product.nameText.trim()) {
+        alert("Заполните Название");
+        return false;
+      }
+      if (!product.mainImageLink.trim()) {
+        alert("Заполните Главное изображение");
+        return false;
+      }
+      if (!product.standardPriceValue.trim()) {
+        alert("Заполните Базовую цену");
+        return false;
+      }
+      if (!product.discountPriceValue.trim()) {
+        alert("Заполните Цену со скидкой");
+        return false;
+      }
+      if (!product.segmentId || product.segmentId === "null") {
+        alert("Выберите категорию");
+        return false;
+      }
+      if (product.sizeIds.length === 0) {
+        alert("Добавьте хотя бы один размер");
+        return false;
+      }
+      if (product.sizeIds.some(sizeId => !sizeId || sizeId === "null")) {
+        alert("Все размеры должны быть выбраны. Убедитесь, что для каждого размера выбрано значение.");
+        return false;
+      }
+      // Проверка других изображений - все должны быть заполнены
+      if (product.otherImageLinks.some(link => !link.trim())) {
+        alert("Все дополнительные изображения должны иметь ссылки. Заполните все поля 'Другие изображения'.");
+        return false;
+      }
+      return true;
+    }
+
+    // Функция для рендеринга только контейнеров изображений и размеров
+    function renderProductContainers(product, productElement) {
+      // Рендерим другие изображения
+      const otherImagesContainer = productElement.querySelector('.other-images-container');
+      otherImagesContainer.innerHTML = '';
+      
+      product.otherImageLinks.forEach((link, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-link';
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = link;
+        input.className = 'other-image-input';
+        input.placeholder = 'Ссылка на изображение';
+        wrapper.appendChild(input);
+        
+        wrapper.appendChild(createRemoveButton(() => {
+          saveProductInputValues(product);
+          product.otherImageLinks.splice(index, 1);
+          renderProductContainers(product, productElement);
+        }));
+        
+        otherImagesContainer.appendChild(wrapper);
+      });
+      
+      // Рендерим размеры
+      const sizesContainer = productElement.querySelector('.sizes-container');
+      sizesContainer.innerHTML = '';
+      
+      product.sizeIds.forEach((sizeId, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-link';
+        
+        const select = document.createElement('select');
+        select.className = 'size-select';
+        
+        // Добавляем опцию по умолчанию "Выберите размер"
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "null";
+        defaultOption.textContent = "Выберите размер";
+        defaultOption.disabled = true;
+        defaultOption.selected = !sizeId || sizeId === "null";
+        select.appendChild(defaultOption);
+        
+        // Добавляем доступные размеры
+        sizes.filter(s => s.value !== "null").forEach(s => {
+          const option = document.createElement('option');
+          option.value = s.id;
+          option.textContent = s.value;
+          if (sizeId === s.id) option.selected = true;
+          select.appendChild(option);
+        });
+        
+        wrapper.appendChild(select);
+        wrapper.appendChild(createRemoveButton(() => {
+          saveProductInputValues(product);
+          product.sizeIds.splice(index, 1);
+          renderProductContainers(product, productElement);
+        }));
+        
+        sizesContainer.appendChild(wrapper);
+      });
+    }
+
+    function renderProducts() {
+      const productsContainer = document.getElementById('products');
+      productsContainer.innerHTML = '';
+
+      products.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'item product-item';
+        div.setAttribute('data-id', p.id || 'new');
+
+        // Название
+        const nameLabel = document.createElement('div');
+        nameLabel.className = 'label'; 
+        nameLabel.textContent = 'Название:';
+        const nameInput = document.createElement('input');
+        nameInput.className = 'name-input';
+        nameInput.value = p.nameText || '';
+        div.appendChild(nameLabel); 
+        div.appendChild(nameInput);
+
+        // Главное изображение
+        const mainLabel = document.createElement('div');
+        mainLabel.className = 'label'; 
+        mainLabel.textContent = 'Главное изображение:';
+        const mainInput = document.createElement('input');
+        mainInput.className = 'main-image-input';
+        mainInput.value = p.mainImageLink || '';
+        div.appendChild(mainLabel); 
+        div.appendChild(mainInput);
+
+        // Другие изображения
+        const otherLabel = document.createElement('div'); 
+        otherLabel.className = 'label'; 
+        otherLabel.textContent = 'Другие изображения:'; 
+        div.appendChild(otherLabel);
+        
+        const otherImagesContainer = document.createElement('div'); 
+        otherImagesContainer.className = 'images other-images-container';
+        div.appendChild(otherImagesContainer);
+        
+        const addImgBtn = document.createElement('button');
+        addImgBtn.textContent = "Добавить изображение"; 
+        addImgBtn.className = "add-btn";
+        addImgBtn.onclick = () => {
+          saveProductInputValues(p);
+          p.otherImageLinks.push("");
+          renderProductContainers(p, div);
+        };
+        div.appendChild(addImgBtn);
+
+        // Базовая цена
+        const baseLabel = document.createElement('div'); 
+        baseLabel.className = 'label'; 
+        baseLabel.textContent = 'Базовая цена:'; 
+        const baseInput = document.createElement('input'); 
+        baseInput.className = 'standard-price-input';
+        baseInput.value = p.standardPriceValue || ''; 
+        div.appendChild(baseLabel); 
+        div.appendChild(baseInput);
+
+        // Цена со скидкой
+        const discountLabel = document.createElement('div'); 
+        discountLabel.className = 'label'; 
+        discountLabel.textContent = 'Цена со скидкой:'; 
+        const discountInput = document.createElement('input'); 
+        discountInput.className = 'discount-price-input';
+        discountInput.value = p.discountPriceValue || ''; 
+        div.appendChild(discountLabel); 
+        div.appendChild(discountInput);
+
+        // Категория
+        const segLabel = document.createElement('div'); 
+        segLabel.className = 'label'; 
+        segLabel.textContent = 'Категория:'; 
+        const segSelect = document.createElement('select');
+        segSelect.className = 'segment-select';
+        
+        // Добавляем опцию по умолчанию "Выберите категорию"
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "null";
+        defaultOption.textContent = "Выберите категорию";
+        defaultOption.disabled = true;
+        defaultOption.selected = !p.segmentId || p.segmentId === "null";
+        segSelect.appendChild(defaultOption);
+        
+        // Добавляем доступные категории
+        segments.filter(s => s.value !== "null").forEach(s => {
+          const opt = document.createElement('option'); 
+          opt.value = s.id; 
+          opt.textContent = s.value; 
+          if (p.segmentId === s.id) opt.selected = true;
+          segSelect.appendChild(opt);
+        });
+        
+        div.appendChild(segLabel); 
+        div.appendChild(segSelect);
+
+        // Размеры
+        const sizeLabel = document.createElement('div'); 
+        sizeLabel.className = 'label'; 
+        sizeLabel.textContent = 'Размеры:'; 
+        div.appendChild(sizeLabel);
+        
+        const sizeContainer = document.createElement('div'); 
+        sizeContainer.className = 'images sizes-container';
+        div.appendChild(sizeContainer);
+        
+        const addSizeBtn = document.createElement('button'); 
+        addSizeBtn.textContent = "Добавить размер"; 
+        addSizeBtn.className = "add-btn";
+        addSizeBtn.onclick = () => {
+          saveProductInputValues(p);
+          p.sizeIds.push("null"); // Добавляем значение null по умолчанию
+          renderProductContainers(p, div);
+        };
+        div.appendChild(addSizeBtn);
+
+        // Сохранить / Обновить
+        const actionBtn = document.createElement('button');
+        if (!p.id) {
+          actionBtn.textContent = "Сохранить"; 
+          actionBtn.className = "save-btn";
+          actionBtn.onclick = async () => {
+            saveProductInputValues(p);
+            if (validateProduct(p)) {
+              try {
+                div.classList.add('loading');
+                await ApiService.saveProduct(p);
+                alert('Продукт успешно сохранен!');
+                // После успешного сохранения перезагружаем данные с сервера
+                const loader = new DataLoader(API_BASE);
+                products = await loader.getProducts();
+                renderProducts();
+              } catch (error) {
+                alert('Ошибка при сохранении продукта: ' + error.message);
+              } finally {
+                div.classList.remove('loading');
+              }
+            }
+          };
+        } else {
+          actionBtn.textContent = "Обновить"; 
+          actionBtn.className = "update-btn";
+          actionBtn.onclick = async () => {
+            saveProductInputValues(p);
+            if (validateProduct(p)) {
+              try {
+                div.classList.add('loading');
+                await ApiService.updateProduct(p);
+                alert('Продукт успешно обновлен!');
+                // После успешного обновления перезагружаем данные с сервера
+                const loader = new DataLoader(API_BASE);
+                products = await loader.getProducts();
+                renderProducts();
+              } catch (error) {
+                alert('Ошибка при обновлении продукта: ' + error.message);
+              } finally {
+                div.classList.remove('loading');
+              }
+            }
+          };
+        }
+        div.appendChild(actionBtn);
+
+        // крестик удаления продукта
+        div.appendChild(createRemoveButton(async () => { 
+          try {
+            div.classList.add('loading');
+            await ApiService.deleteProduct(p.id);
+            alert('Продукт успешно удален!');
+            // После успешного удаления перезагружаем данные с сервера
+            const loader = new DataLoader(API_BASE);
+            products = await loader.getProducts();
+            renderProducts();
+          } catch (error) {
+            alert('Ошибка при удалении продукта: ' + error.message);
+          } finally {
+            div.classList.remove('loading');
+          }
+        }, true));
+
+        // Рендерим контейнеры изображений и размеров
+        renderProductContainers(p, div);
+
+        productsContainer.appendChild(div);
+      });
+    }
+
+    function renderSizes() {
+      const sizesContainer = document.getElementById('sizes');
+      sizesContainer.innerHTML = '';
+      sizes.filter(s => s.value !== "null").forEach(s => {
+        const div = document.createElement('div'); 
+        div.className = 'item';
+        const input = document.createElement('input'); 
+        input.value = s.value; 
+        input.disabled = true; 
+        div.appendChild(input);
+        div.appendChild(createRemoveButton(async () => {
+          try {
+            div.classList.add('loading');
+            await ApiService.deleteSize(s.id);
+            alert('Размер успешно удален!');
+            // После успешного удаления перезагружаем данные с сервера
+            const loader = new DataLoader(API_BASE);
+            sizes = await loader.getSizes();
+            sizes.unshift(new Size(null, "null"));
+            renderSizes();
+          } catch (error) {
+            alert('Ошибка при удалении размера: ' + error.message);
+          } finally {
+            div.classList.remove('loading');
+          }
+        }));
+        sizesContainer.appendChild(div);
+      });
+    }
+
+    function renderSegments() {
+      const segmentsContainer = document.getElementById('segments');
+      segmentsContainer.innerHTML = '';
+      segments.filter(s => s.value !== "null").forEach(s => {
+        const div = document.createElement('div'); 
+        div.className = 'item';
+        const input = document.createElement('input'); 
+        input.value = s.value; 
+        input.disabled = true; 
+        div.appendChild(input);
+        div.appendChild(createRemoveButton(async () => {
+          try {
+            div.classList.add('loading');
+            await ApiService.deleteSegment(s.id);
+            alert('Категория успешно удалена!');
+            // После успешного удаления перезагружаем данные с сервера
+            const loader = new DataLoader(API_BASE);
+            segments = await loader.getSegments();
+            segments.unshift(new Segment(null, "null"));
+            renderSegments();
+          } catch (error) {
+            alert('Ошибка при удалении категории: ' + error.message);
+          } finally {
+            div.classList.remove('loading');
+          }
+        }));
+        segmentsContainer.appendChild(div);
+      });
+    }
+
+    async function init() {
+      setupToggleBlocks();
+      const loader = new DataLoader(API_BASE);
+      [products, segments, sizes] = await Promise.all([
+        loader.getProducts(),
+        loader.getSegments(),
+        loader.getSizes()
+      ]);
+      segments.unshift(new Segment(null, "null"));
+      sizes.unshift(new Size(null, "null"));
+
+      renderProducts(); 
+      renderSizes(); 
+      renderSegments();
+
+      document.getElementById('add-product-btn').onclick = () => {
+        products.unshift(new Product(null, "", "", "", "null", [], "", []));
+        renderProducts();
+      };
+      
+      document.getElementById('add-size-btn').onclick = () => {
+        const s = new Size(null, ""); 
+        sizes.push(s);
+        renderSizes();
+        const last = sizes[sizes.length - 1];
+        const div = document.getElementById('sizes').lastChild;
+        const input = div.querySelector('input');
+        input.disabled = false;
+        const saveBtn = document.createElement('button'); 
+        saveBtn.textContent = "Сохранить"; 
+        saveBtn.className = "save-btn";
+        saveBtn.onclick = async () => {
+          if (!input.value.trim()) return alert("Заполните размер");
+          try {
+            div.classList.add('loading');
+            await ApiService.saveSize({ value: input.value });
+            input.disabled = true;
+            alert('Размер успешно сохранен!');
+            // После успешного сохранения перезагружаем данные с сервера
+            sizes = await loader.getSizes();
+            sizes.unshift(new Size(null, "null"));
+            renderSizes();
+          } catch (error) {
+            alert('Ошибка при сохранении размера: ' + error.message);
+          } finally {
+            div.classList.remove('loading');
+          }
+        };
+        div.appendChild(saveBtn);
+      };
+      
+      document.getElementById('add-segment-btn').onclick = () => {
+        const s = new Segment(null, ""); 
+        segments.push(s);
+        renderSegments();
+        const last = segments[segments.length - 1];
+        const div = document.getElementById('segments').lastChild;
+        const input = div.querySelector('input');
+        input.disabled = false;
+        const saveBtn = document.createElement('button'); 
+        saveBtn.textContent = "Сохранить"; 
+        saveBtn.className = "save-btn";
+        saveBtn.onclick = async () => {
+          if (!input.value.trim()) return alert("Заполните категорию");
+          try {
+            div.classList.add('loading');
+            await ApiService.saveSegment({ value: input.value });
+            input.disabled = true;
+            alert('Категория успешно сохранена!');
+            // После успешного сохранения перезагружаем данные с сервера
+            segments = await loader.getSegments();
+            segments.unshift(new Segment(null, "null"));
+            renderSegments();
+          } catch (error) {
+            alert('Ошибка при сохранении категории: ' + error.message);
+          } finally {
+            div.classList.remove('loading');
+          }
+        };
+        div.appendChild(saveBtn);
+      };
+    }
+
+    init();
+  </script>
+</body>
+</html>
